@@ -220,7 +220,7 @@ def main():
         populations = np.unique(metadata[metadata.region.isin(regions)].population)
     
     ## Subsampling by population
-    if len(populations) == 0:
+    if populations[0] == "":
         if individuals_per_pop is None:
             metadata_subset = metadata
             sample_ids = None
