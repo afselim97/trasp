@@ -34,8 +34,9 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument('-input', type=str, required=True)
 argparser.add_argument('-output', type=str, required=True)
 argparser.add_argument('-metadata', type=str)
-argparser.add_argument('-populations', type=str, required=True)
-argparser.add_argument('-individuals_per_pop', type=int, required=True)
+argparser.add_argument('-populations', type=str, default="all")
+argparser.add_argument('-regions', type=str, default=None)
+argparser.add_argument('-individuals_per_pop', type=int, default=None)
 
 
 args = argparser.parse_args()
@@ -43,17 +44,25 @@ input_path = args.input
 output_path = args.output
 metadata_path = args.metadata
 populations = args.populations
+regions = args.regions
 individuals_per_pop = args.individuals_per_pop
+
 #%%
 if metadata_path is None:
     metadata_path = os.path.join(input_path,"metadata.csv")
 print(metadata_path)
 metadata = pd.read_csv(metadata_path)
-if populations is None:
+if populations == "all":
     populations = np.unique(metadata.population)
 else:
     populations = populations.split(',')
-
+if individuals_per_pop == 0:
+    individuals_per_pop = None
+if regions == "None":
+    regions = None
+else:
+    regions = regions.split(',')
+    populations = np.unique(metadata[metadata.region.isin(regions)].population)
 os.makedirs(output_path,exist_ok=True)
 #%%
 print("subsampling from trees")
