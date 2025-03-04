@@ -22,7 +22,7 @@ trees_path = args.output
 # %%
 n=20
 # PATH_TO_RELATE = "/project2/jnovembre/afselim/relate/"
-PATH_TO_RELATE = "/Users/afselim/Documents/relate"
+PATH_TO_RELATE = "/Users/afselim/Documents/relate/"
 deme_name = demes_path.split("/")[-1].split(".")[0]
 sims_path = os.path.join(trees_path,f"sims/{deme_name}")
 sims_infer_path = os.path.join(trees_path,f"sims_infer/{deme_name}")
@@ -79,6 +79,7 @@ for chrom_num in tqdm(range(1,23)):
 N = np.mean(N)
 mu = np.mean(mu_list)
 os.chdir(sims_infer_path)
+#%%
 for chrom_num in tqdm(range(1,23)):
     print(f"running RELATE for chromosome {chrom_num}")
     process_vcf = f'"{PATH_TO_RELATE}bin/RelateFileFormats" --mode ConvertFromVcf --haps chrom_{chrom_num}.hap --sample chrom_{chrom_num}.sample -i chrom_{chrom_num}'
