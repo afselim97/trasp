@@ -9,10 +9,16 @@ import plotly.express as px
 import plotly.io as pio
 import demesdraw
 import demes
+from trasp import *
+from mds import *
+from utils import *
 try:
     import msprime
 except:
     print("cannot simulate")
+
+
+
 from matplotlib.cm import get_cmap
 from matplotlib import rcParams
 def set_custom_rcparams():
@@ -51,11 +57,6 @@ def set_custom_rcparams():
     # -- Plot Styles --
     rcParams['lines.linewidth'] = 3
 set_custom_rcparams()
-
-from trasp import *
-from mds import *
-from utils import *
-
 def prepare_from_simulation(demes_file_path: str, n: int, L: int):
     """prepares an iterator of tree sequences given a demes file to simulate.
 
@@ -173,9 +174,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-input", type=str, required=True, help="path to directory with inferred trees")    
     parser.add_argument("-output", type=str, required=True, help="output path")
-    parser.add_argument("-metadata", type=str, help="path to metadata file. Must include columns with names [population,sample_id]")
-    parser.add_argument("-mode", type=str, default="inferred", help="either 'simulated' or 'inferred'.")
-    parser.add_argument("-L", type=int, default=10000, help="number of independent trees to sample or simulate")
+    parser.add_argument("-metadata", type=str, required = True, help="path to metadata file. Must include columns with names [population,sample_id]")
+    parser.add_argument('-populations', type=str, default="", help="comma separated list of populations to subsample")
+    parser.add_argument('-regions', type=str, default=None,help="comma separated list of regions to subsample")
+    parser.add_argument('-n', type=int, default=None, help="number of individuals per population to subsample")
     parser.add_argument("-min_time", type=float, help="minimum time to start computing rates and embeddings")
     parser.add_argument("-max_time", type=float, help="maximum time to compute rates and embeddings")
     parser.add_argument("-num_timepoints", type=int, default=100, help="number of timepoints to use")
@@ -186,40 +188,58 @@ def main():
     
     input = args.input
     output = args.output
-    metadata = args.metadata
-    mode = args.mode
-    L = args.L
+    metadata_path = args.metadata
+    populations = args.populations
+    regions = args.regions
+    individuals_per_pop = args.n
     min_time = args.min_time
     max_time = args.max_time
     num_timepoints = args.num_timepoints
     delta = args.delta
     log_time = args.log_time
 
+    os.makedirs(output,exist_ok=True)
+
     if log_time:
         t_list = np.logspace(np.log10(min_time),np.log10(max_time),num_timepoints)
     else:
         t_list = np.linspace(min_time,max_time,num_timepoints)
 
-    os.makedirs(output,exist_ok=True)
+    # Subsampling populations
+    metadata = pd.read_csv(metadata_path)
 
-    if mode == "inferred":
-        assert metadata is not None, "for inferred trees, metadata file has to be provided"
-        metadata = pd.read_csv(metadata)
-        assert all(col in metadata.columns for col in ["sample_id", "population"]), "metadata file must include columns ['sample_id','population']"
-        population_samples_dict = get_samples_dict(metadata)
+    if individuals_per_pop == 0:
+        individuals_per_pop = None
 
-    # Preprocess the trees
-    assert mode == "inferred" or mode == "simulated", "mode must be 'simulated' or 'inferred'"
-    if mode == "simulated":
-        n=40
-        ts_list,L_list,n_samples,population_samples_dict = prepare_from_simulation(demes_file_path = input, n=n, L=L)
+    ## Subsampling by region
+    if regions == "None" or regions is None:
+        regions = None
+        populations = populations.split(',')
+    else:
+        regions = regions.split(',')
+        populations = np.unique(metadata[metadata.region.isin(regions)].population)
+    
+    ## Subsampling by population
+    if len(populations) == 0:
+        if individuals_per_pop is None:
+            metadata_subset = metadata
+            sample_ids = None
+        else:
+            metadata_subset = subset_metadata(metadata,individuals_per_pop=individuals_per_pop)
+            sample_ids = metadata_subset.sample_id.values
+    else:
+        metadata_subset = subset_metadata(metadata,populations,individuals_per_pop)
+        sample_ids = metadata_subset.sample_id.values
 
-        print(f"simulating {L} trees under specified demography")
+    
+    metadata_subset["sample_id"] = list(metadata_subset.index) # Resetting the sample ids after subsampling
+    population_samples_dict = get_samples_dict(metadata_subset)
+    metadata_subset.to_csv(f"{output}/metadata.csv",index=False)
 
     # Compute the rates
     print("Estimating pairwise coalescent rates")
-    num_uncoalesced_through_time,num_coal_events_within_windows,rates_through_time = calculate_rates(input,t_list,delta)
 
+    num_uncoalesced_through_time,num_coal_events_within_windows,rates_through_time = calculate_rates(input, t_list, delta, sample_ids)
     data_matrix = np.stack((num_uncoalesced_through_time,num_coal_events_within_windows,rates_through_time),axis=3)
     data_df = create_data_df(data_matrix,t_list,delta,population_samples_dict)
 
@@ -243,8 +263,8 @@ def main():
     colors = cmap(np.linspace(0,255,K).astype(int))[:,:-1]
     colors_dict = {label:mcolors.to_hex(colors[i]) for i,label in enumerate(labels)}
 
-    if "SS" not in input and mode == "simulated":
-        deme_fig = plot_deme(input,output,t_list,colors_dict,log_time)
+    # if "SS" not in input and mode == "simulated":
+    #     deme_fig = plot_deme(input,output,t_list,colors_dict,log_time)
     dynamic_fig = dynamic_3d_plot(output, embeddings_df, colors_dict, log_time)
 
     # Plotting the rates
@@ -253,3 +273,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# %%

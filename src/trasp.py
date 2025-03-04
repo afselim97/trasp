@@ -104,7 +104,7 @@ class trasp():
         return num_coal_events_between_windows, num_coal_events_within_windows
 
 
-def calculate_rates(ts_dir,t_list,delta):
+def calculate_rates(ts_dir,t_list,delta,sample_ids = None):
     delta_list = np.array([delta]*len(t_list))
     if t_list[0] == 0:
         t_list_lower = t_list
@@ -122,6 +122,9 @@ def calculate_rates(ts_dir,t_list,delta):
     ts_files = glob.glob(os.path.join(ts_dir,"*.trees"))
     for file in tqdm(ts_files):
         ts = tskit.load(file)
+        if sample_ids is not None:
+            ts = ts.simplify(sample_ids)
+            
         trasp_object = trasp(ts)
         L_list.append(trasp_object.L)
         num_coal_events_between_windows,num_coal_events_within_windows = trasp_object.compute_coal_counts(t_list_lower,t_list_upper,window_list_upper)
