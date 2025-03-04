@@ -1,15 +1,17 @@
 #!/bin/bash
 # L=20000
 
-pops=""
-n=""
-output=""
-max_time=""
+pops="all"
+regions="None"
+n=0
+output="test"
+max_time=20000
 
 # Parse command-line arguments
-while getopts "p:n:o:t:" opt; do
+while getopts "p:r:n:o:t:" opt; do
   case $opt in
     p) pops=$OPTARG ;;
+    r) regions=$OPTARG ;;
     n) n=$OPTARG ;;
     o) output=$OPTARG ;;
     t) max_time=$OPTARG ;;
@@ -18,11 +20,6 @@ while getopts "p:n:o:t:" opt; do
   esac
 done
 
-# Check if all required arguments are provided
-if [ -z "$pops" ] || [ -z "$n" ] || [ -z "$output" ] || [ -z "$max_time" ]; then
-  echo "Usage: $0 -p pops -n n -o output -m max_time"
-  exit 1
-fi
+../src/run_trasp -input trees/wohns -output results/"$output" -metadata trees/wohns/metadata.csv -min_time 20 -max_time $max_time -num_timepoints 200 -delta 100 -log_time -populations $pops -individuals_per_pop $n -regions $regions
 
-python simplify_trees.py -input trees/human/wohns -output trees/human/"$output" -populations $pops -individuals_per_pop $n
-../src/run_trasp -input trees/human/"$output" -output results/"$output" -metadata trees/human/"$output"/metadata.csv -mode inferred -min_time 1 -max_time $max_time -num_timepoints 200 -delta 100 -log_time
+../src/run_trasp -input trees/sims/split -output results/"$output" -metadata trees/sims/split/metadata.csv -min_time 20 -max_time 5000 -num_timepoints 100 -delta 100 -log_time
