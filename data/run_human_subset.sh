@@ -21,5 +21,3 @@ while getopts "p:r:n:o:t:" opt; do
 done
 
 ../src/run_trasp -input trees/wohns -output results/"$output" -metadata trees/wohns/metadata.csv -min_time 20 -max_time $max_time -num_timepoints 200 -delta 100 -log_time -populations $pops -individuals_per_pop $n -regions $regions
-
-../src/run_trasp -input trees/sims/split -output results/"$output" -metadata trees/sims/split/metadata.csv -min_time 20 -max_time 5000 -num_timepoints 100 -delta 100 -log_time

@@ -1,4 +1,5 @@
 #%%
+# mypy: ignore-errors
 import numpy as np
 import itertools
 from tqdm import tqdm
@@ -30,7 +31,7 @@ def compute_distance_till_threshold(ts,threshold=0.05):
         x = fraction_shared_nodes(first_tree,tree,samples)
         if x<threshold:
             if i<n/4: # That is if for some reason the threshold is reached too quickly. We set the distance till threshold manually to every n trees
-                return n
+                return n/2
             else:
                 return i
     return n

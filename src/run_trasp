@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import plotly.express as px
 import plotly.io as pio
-import demesdraw
+# import demesdraw
 import demes
 from trasp import *
 from mds import *
@@ -44,8 +44,8 @@ def set_custom_rcparams():
     rcParams['ytick.major.size'] = 0
     # -- Fonts --
     rcParams['font.size'] = 12
-    rcParams['font.family'] = 'sans-serif'
-    plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'sans-serif']
+    # rcParams['font.family'] = 'sans-serif'
+    # plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'sans-serif']
     rcParams['text.color'] = 'black'
     rcParams['axes.labelcolor'] = 'black'
     # -- Figure size --
@@ -96,15 +96,15 @@ def prepare_from_simulation(demes_file_path: str, n: int, L: int):
     
     return ts_list,L_list,n_samples,population_samples_dict
 
-def plot_deme(input,output,t_list,colors_dict,log_time):
-    graph = demes.load(input)
-    fig,ax_demes = plt.subplots(figsize = (3,5))
-    demesdraw.tubes(graph,ax=ax_demes,max_time=np.max(t_list),colours = colors_dict,labels="xticks-legend",log_time=log_time)
-    ax_demes.set_title("Simulated Demography")
-    if ax_demes.get_legend() is not None:
-        ax_demes.get_legend().remove()
-    fig.savefig(os.path.join(output,"deme.png"),dpi=500)
-    return fig
+# def plot_deme(input,output,t_list,colors_dict,log_time):
+#     graph = demes.load(input)
+#     fig,ax_demes = plt.subplots(figsize = (3,5))
+#     demesdraw.tubes(graph,ax=ax_demes,max_time=np.max(t_list),colours = colors_dict,labels="xticks-legend",log_time=log_time)
+#     ax_demes.set_title("Simulated Demography")
+#     if ax_demes.get_legend() is not None:
+#         ax_demes.get_legend().remove()
+#     fig.savefig(os.path.join(output,"deme.png"),dpi=500)
+#     return fig
 
 def dynamic_3d_plot(output, embeddings_df,colors_dict,log_time):
     component_1_df = embeddings_df[embeddings_df.component==1].drop(columns=["component","time_inx"])
@@ -177,7 +177,7 @@ def main():
     parser.add_argument("-metadata", type=str, required = True, help="path to metadata file. Must include columns with names [population,sample_id]")
     parser.add_argument('-populations', type=str, default="", help="comma separated list of populations to subsample")
     parser.add_argument('-regions', type=str, default=None,help="comma separated list of regions to subsample")
-    parser.add_argument('-n', type=int, default=None, help="number of individuals per population to subsample")
+    parser.add_argument('-individuals_per_pop', type=int, default=None, help="number of individuals per population to subsample")
     parser.add_argument("-min_time", type=float, help="minimum time to start computing rates and embeddings")
     parser.add_argument("-max_time", type=float, help="maximum time to compute rates and embeddings")
     parser.add_argument("-num_timepoints", type=int, default=100, help="number of timepoints to use")
@@ -191,7 +191,7 @@ def main():
     metadata_path = args.metadata
     populations = args.populations
     regions = args.regions
-    individuals_per_pop = args.n
+    individuals_per_pop = args.individuals_per_pop
     min_time = args.min_time
     max_time = args.max_time
     num_timepoints = args.num_timepoints
